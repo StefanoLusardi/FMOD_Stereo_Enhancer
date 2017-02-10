@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../../FMOD_PLUGINS_LIB/fmod.hpp"
+#include "../../FMOD_Lib/fmod.hpp"
 
 extern "C" {
 	F_EXPORT FMOD_DSP_DESCRIPTION* F_CALL FMODGetDSPDescription();
@@ -28,13 +28,7 @@ FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_dsprelease(FMOD_DSP_STATE *dsp_state
 FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_dspreset(FMOD_DSP_STATE *dsp_state);
 FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_dspprocess(FMOD_DSP_STATE *dsp_state, unsigned int length, const FMOD_DSP_BUFFER_ARRAY *inbufferarray, FMOD_DSP_BUFFER_ARRAY *outbufferarray, FMOD_BOOL inputsidle, FMOD_DSP_PROCESS_OPERATION op);
 FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_dspsetparamfloat(FMOD_DSP_STATE *dsp_state, int index, float value);
-FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_dspsetparamint(FMOD_DSP_STATE *dsp_state, int index, int value);
-FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_dspsetparambool(FMOD_DSP_STATE *dsp_state, int index, FMOD_BOOL value);
-FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_dspsetparamdata(FMOD_DSP_STATE *dsp_state, int index, void *data, unsigned int length);
 FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_dspgetparamfloat(FMOD_DSP_STATE *dsp_state, int index, float *value, char *valuestr);
-FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_dspgetparamint(FMOD_DSP_STATE *dsp_state, int index, int *value, char *valuestr);
-FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_dspgetparambool(FMOD_DSP_STATE *dsp_state, int index, FMOD_BOOL *value, char *valuestr);
-FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_dspgetparamdata(FMOD_DSP_STATE *dsp_state, int index, void **value, unsigned int *length, char *valuestr);
 FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_shouldiprocess(FMOD_DSP_STATE *dsp_state, FMOD_BOOL inputsidle, unsigned int length, FMOD_CHANNELMASK inmask, int inchannels, FMOD_SPEAKERMODE speakermode);
 FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_sys_register(FMOD_DSP_STATE *dsp_state);
 FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_sys_deregister(FMOD_DSP_STATE *dsp_state);
@@ -51,28 +45,28 @@ FMOD_DSP_PARAMETER_DESC *FMOD_Stereo_Enhancer_dspparam[STEREO_ENHANCER_NUM_PARAM
 FMOD_DSP_DESCRIPTION FMOD_Stereo_Enhancer_Desc =
 {
 	FMOD_PLUGIN_SDK_VERSION,
-	"sL Stereo Enhancer", // name
-	0x0001, // plug-in version
-	1,      // number of input buffers to process
-	1,      // number of output buffers to process
+	"sL Stereo Enhancer", 
+	0x0001, 
+	1,      
+	1,      
 	FMOD_Stereo_Enhancer_dspcreate,
 	FMOD_Stereo_Enhancer_dsprelease,
 	FMOD_Stereo_Enhancer_dspreset,
-	0, // FMOD_x_dspread   
+	0,   
 	FMOD_Stereo_Enhancer_dspprocess,
-	0, // WTF is this!?
+	0, 
 	STEREO_ENHANCER_NUM_PARAMETERS,
 	FMOD_Stereo_Enhancer_dspparam,
 	FMOD_Stereo_Enhancer_dspsetparamfloat,
-	0, // FMOD_x_dspsetparamint,
-	0, // FMOD_x_dspsetparambool,
-	0, // FMOD_x_dspsetparamdata,
+	0, 
+	0, 
+	0, 
 	FMOD_Stereo_Enhancer_dspgetparamfloat,
-	0, // FMOD_x_dspgetparamint,
-	0, // FMOD_x_dspgetparambool,
-	0, // FMOD_x_dspgetparamdata,
+	0, 
+	0, 
+	0, 
 	FMOD_Stereo_Enhancer_shouldiprocess,
-	0, // userdata
+	0,
 	FMOD_Stereo_Enhancer_sys_register,
 	FMOD_Stereo_Enhancer_sys_deregister,
 	FMOD_Stereo_Enhancer_sys_mix
@@ -82,7 +76,15 @@ extern "C"
 {
 	F_EXPORT FMOD_DSP_DESCRIPTION* F_CALL FMODGetDSPDescription()
 	{
-		FMOD_DSP_INIT_PARAMDESC_FLOAT(p_width, "Stereo Width", "", "Default = 1. Mono = 0", STEREO_WIDTH_MIN, STEREO_WIDTH_MAX, STEREO_WIDTH_DEFAULT);
+		FMOD_DSP_INIT_PARAMDESC_FLOAT(
+			p_width, 
+			"Stereo Width", 
+			"", 
+			"Default = 1. Mono = 0", 
+			STEREO_WIDTH_MIN, 
+			STEREO_WIDTH_MAX, 
+			STEREO_WIDTH_DEFAULT, 
+			false);
 		return &FMOD_Stereo_Enhancer_Desc;
 	}
 }
@@ -140,7 +142,6 @@ FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_dspprocess(FMOD_DSP_STATE *dsp_state
 	{
 		state->read(inbufferarray[0].buffers[0], outbufferarray[0].buffers[0], length, inbufferarray[0].buffernumchannels[0]); // input and output channels count match for this effect
 	}
-
 	return FMOD_OK;
 }
 
@@ -161,7 +162,6 @@ FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_dspsetparamfloat(FMOD_DSP_STATE *dsp
 		state->setWidth(value);
 		return FMOD_OK;
 	}
-
 	return FMOD_ERR_INVALID_PARAM;
 }
 
@@ -174,21 +174,16 @@ FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_dspgetparamfloat(FMOD_DSP_STATE *dsp
 	case STEREO_ENHANCER_STEREO_WIDTH_PARAM:
 		*value = state->getWidth();
 		if (valuestr)
-		{
 			sprintf(valuestr, "%.1f", state->getWidth());
-		}
 		return FMOD_OK;
 	}
-
 	return FMOD_ERR_INVALID_PARAM;
 }
 
 FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_shouldiprocess(FMOD_DSP_STATE * /*dsp_state*/, FMOD_BOOL inputsidle, unsigned int /*length*/, FMOD_CHANNELMASK /*inmask*/, int /*inchannels*/, FMOD_SPEAKERMODE /*speakermode*/)
 {
 	if (inputsidle)
-	{
 		return FMOD_ERR_DSP_DONTPROCESS;
-	}
 
 	return FMOD_OK;
 }
