@@ -2,51 +2,101 @@
 
 StereoEnhancer::StereoEnhancer()
 {
-	m_width = STEREO_WIDTH_DEFAULT;
+	mWidth = STEREO_WIDTH_DEFAULT;
 	reset();
 }
 
-void StereoEnhancer::read(float *inbuffer, float *outbuffer, unsigned int length, int channels)
+void StereoEnhancer::ApplyDsp(float *inbuffer, float *outbuffer, unsigned int length, int channels)
 {
-	float m, s;
+	float mid, side;
 	unsigned int stereoLength = (length * channels) >> 1;
-
-	// TODO: apply smoothing changes to sumGain and diffGain
 
 	while (stereoLength--)
 	{
-		float left  = *inbuffer++;
+		float left = *inbuffer++;
 		float right = *inbuffer++;
-		
-		m = sumGain  * (left  + right);
-		s = diffGain * (right - left);
-		
-		*outbuffer++ = m - s;
-		*outbuffer++ = m + s;
+
+		mid = sumGainCurrent  * (left + right);
+		side = diffGainCurrent * (right - left);
+
+		*outbuffer++ = mid - side;
+		*outbuffer++ = mid + side;
 	}
+}
+
+void StereoEnhancer::process(float *inbuffer, float *outbuffer, unsigned int length, int channels)
+{
+	/* PARAMETERS SMOOTHING */
+	while (length && (sumGainCurrent != sumGainTarget || diffGainCurrent != diffGainTarget))
+	{
+		// Parameters increment
+		float sumGainDelta  = 0.1f;
+		float diffGainDelta = 0.1f;
+
+		// sumGain interpolation
+		if (sumGainCurrent < sumGainTarget)
+		{
+			sumGainCurrent += sumGainDelta;
+			if (sumGainCurrent >= sumGainTarget)
+				sumGainCurrent = sumGainTarget;
+		}
+		else
+		{
+			sumGainCurrent -= sumGainDelta;
+			if (sumGainCurrent <= sumGainTarget)
+				sumGainCurrent = sumGainTarget;
+		}
+
+		// diffGain interpolation
+		if (diffGainCurrent < diffGainTarget)
+		{
+			diffGainCurrent += diffGainDelta;
+			if (diffGainCurrent >= diffGainTarget)
+				diffGainCurrent = diffGainTarget;
+		}
+		else
+		{
+			diffGainCurrent -= diffGainDelta;
+			if (diffGainCurrent <= diffGainTarget)
+				diffGainCurrent = diffGainTarget;
+		}
+
+		// ApplyDsp on 2 samples
+		ApplyDsp(inbuffer, outbuffer, 2, channels);
+		inbuffer++;
+		outbuffer++;
+		length--;
+
+	}
+
+	ApplyDsp(inbuffer, outbuffer, length, channels);
 }
 
 void StereoEnhancer::reset()
 {
-	m_currentWidth = m_targetWidth;
-	m_interpolationSamplesLeft = 0;
+	sumGainCurrent  = sumGainTarget;
+	diffGainCurrent = diffGainTarget;
+	mInterpolationSamples = 0;
+	setWidth(mWidth);
 }
 
 void StereoEnhancer::setWidth(float width)
 {
-	m_width = width;
+	mWidth = width;
 	float tmp;
 
-	if (1.0f + width > 2.0f)
-		tmp = 1.0f / (1.0f + m_width);
+	if (width > 1.0f)
+		tmp = 1.0f / (1.0f + mWidth); // Stereo
 	else
-		tmp = 1.0f / 2.0f;
+		tmp = 1.0f / 2.0f; // Mono
 
-	diffGain = m_width * tmp;
-	sumGain = tmp;
+	diffGainTarget = mWidth * tmp;
+	sumGainTarget = tmp;
+
+	mInterpolationSamples = INTERPOLATION_SAMPLES;
 }
 
 float StereoEnhancer::getWidth()
 {
-	return m_width;
+	return mWidth;
 }

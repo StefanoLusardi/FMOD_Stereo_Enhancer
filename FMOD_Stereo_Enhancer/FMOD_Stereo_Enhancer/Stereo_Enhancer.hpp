@@ -46,7 +46,7 @@ FMOD_DSP_DESCRIPTION FMOD_Stereo_Enhancer_Desc =
 {
 	FMOD_PLUGIN_SDK_VERSION,
 	"sL Stereo Enhancer", 
-	0x0001, 
+	0x00010002, 
 	1,      
 	1,      
 	FMOD_Stereo_Enhancer_dspcreate,
@@ -93,19 +93,19 @@ class StereoEnhancer
 {
 public:
 	StereoEnhancer();
-
-	void  read(float *inbuffer, float *outbuffer, unsigned int length, int channels);
+	void  ApplyDsp(float * inbuffer, float * outbuffer, unsigned int length, int channels);
+	void  process(float *inbuffer, float *outbuffer, unsigned int length, int channels);
 	void  reset();
 	void  setWidth(float width);
 	float getWidth();
 
 private:
-	float m_width;
-	float m_targetWidth;
-	float m_currentWidth;
-	float sumGain;
-	float diffGain;
-	int   m_interpolationSamplesLeft;
+	float mWidth;
+	float sumGainTarget;
+	float sumGainCurrent;
+	float diffGainTarget;
+	float diffGainCurrent;
+	int   mInterpolationSamples;
 };
 
 FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_dspcreate(FMOD_DSP_STATE *dsp_state)
@@ -140,7 +140,7 @@ FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_dspprocess(FMOD_DSP_STATE *dsp_state
 	}
 	else
 	{
-		state->read(inbufferarray[0].buffers[0], outbufferarray[0].buffers[0], length, inbufferarray[0].buffernumchannels[0]); // input and output channels count match for this effect
+		state->process(inbufferarray[0].buffers[0], outbufferarray[0].buffers[0], length, inbufferarray[0].buffernumchannels[0]); // input and output channels count match for this effect
 	}
 	return FMOD_OK;
 }
@@ -187,7 +187,6 @@ FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_shouldiprocess(FMOD_DSP_STATE * /*ds
 
 	return FMOD_OK;
 }
-
 
 FMOD_RESULT F_CALLBACK FMOD_Stereo_Enhancer_sys_register(FMOD_DSP_STATE * /*dsp_state*/)
 {
